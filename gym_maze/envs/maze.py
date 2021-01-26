@@ -101,7 +101,7 @@ class MazeEnv(gym.Env):
             
         if self._goal_test(self.state):  # Goal check
             print ("Reached")
-            reward = 10
+            reward = 100
             done = True
         elif self.state == old_state:  # Hit wall
             reward = -1 * dynamic_reward_function()
