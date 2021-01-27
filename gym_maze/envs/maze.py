@@ -54,6 +54,7 @@ class MazeEnv(gym.Env):
 
         # Size of the partial observable window
         self.pob_size = pob_size
+        self.success_rate = 0
 
         # Observation space
         low_obs = 0  # Lowest integer in observation
@@ -101,7 +102,8 @@ class MazeEnv(gym.Env):
             
         if self._goal_test(self.state):  # Goal check
             print ("Reached")
-            reward = 100
+            reward = +50
+            self.success_rate += 1
             done = True
         elif self.state == old_state:  # Hit wall
             reward = -1 * dynamic_reward_function()
@@ -110,7 +112,9 @@ class MazeEnv(gym.Env):
             reward = -1 * dynamic_reward_function()
             done = False
 
-        info = {}
+        info = {
+            "success_rate": self.success_rate
+        }
 
         return self._get_obs(), reward, done, info
 
