@@ -5,9 +5,11 @@ import matplotlib.animation as animation
 from matplotlib import colors
 from past.utils import old_div
 
-import gym
+import gym, logging
 from gym import spaces
 from gym.utils import seeding
+
+logging.basicConfig(filename='./ray_res.log', filemode='w')
 
 class MazeEnv(gym.Env):
     """Configurable environment for maze. """
@@ -101,9 +103,9 @@ class MazeEnv(gym.Env):
         self.traces.append(self.state)
             
         if self._goal_test(self.state):  # Goal check
-            print ("Reached")
-            reward = +50
+            reward = 100
             self.success_rate += 1
+            logging.warning('Reached' + str(reward))
             done = True
         elif self.state == old_state:  # Hit wall
             reward = -1 * dynamic_reward_function()
@@ -115,6 +117,8 @@ class MazeEnv(gym.Env):
         info = {
             "success_rate": self.success_rate
         }
+        
+        print (info)
 
         return self._get_obs(), reward, done, info
 
