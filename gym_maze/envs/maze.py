@@ -113,14 +113,15 @@ class MazeEnv(gym.Env):
         else:  # Non-terminal state
             reward = -1 * dynamic_reward_function()
             done = False
-
-        info = {
-            "success_rate": self.success_rate
-        }
         
-        print (info)
+        new_state, frame = self._get_obs()
+        
+        info = {
+           "success_rate": self.success_rate,
+            "frame": frame
+        }
 
-        return self._get_obs(), reward, done, info
+        return new_state, reward, done, info
 
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
@@ -212,8 +213,6 @@ class MazeEnv(gym.Env):
     def _get_obs(self):
         if self.obs_type == 'full':
             return self._get_full_obs()
-        # elif self.obs_type == 'partial':
-        #     return self._get_partial_obs(self.pob_size).flatten()
 
     def _get_full_obs(self):
         """Return a 2D array representation of maze."""
@@ -238,7 +237,7 @@ class MazeEnv(gym.Env):
         if self.maze[xA-1][yA] == 1: new_obs[5] = 1 # west wall
         
         # return obs
-        return new_obs
+        return new_obs, frame_obs
 
     def _get_partial_obs(self, size=1):
         """Get partial observable window according to Moore neighborhood"""
@@ -390,13 +389,3 @@ class MazeEnv(gym.Env):
     #     self.im_value.set_data(V)
     #     plt.draw()
     #     plt.pause(.1)
-
-class SparseMazeEnv(MazeEnv):
-    def step(self, action):
-        obs, reward, done, info = super()._step(action)
-
-        # Indicator reward function
-        if reward != 1:
-            reward = 0
-
-        return obs, reward, done, info
