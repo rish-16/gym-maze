@@ -97,7 +97,7 @@ class MazeEnv(gym.Env):
         cur_y = self.state[1]
         
         def dynamic_reward_function():
-            return self.read_table(old_state[0], old_state[1]) - self.read_table(cur_x, cur_y)
+            return self.read_table(cur_x, cur_y) - self.read_table(old_state[0], old_state[1])
 
         # Footprint: Record agent trajectory
         self.traces.append(self.state)
@@ -140,52 +140,51 @@ class MazeEnv(gym.Env):
 
         return self._get_obs()
 
-    # def render(self, mode='human', close=False):
-    #     if close:
-    #         plt.close()
-    #         return
+    def render(self, mode='human', close=False):
+        if close:
+            plt.close()
+            return
 
-    #     walls = self._get_full_obs()
-    #     # partial_obs = self._get_partial_obs(self.pob_size)
+        partial_obs, obs = self._get_full_obs()
 
-    #     # For rendering traces: Only for visualization, does not affect the observation data
-    #     if self.render_trace:
-    #         obs[list(zip(*self.traces[:-1]))] = self.VISITED
+        # For rendering traces: Only for visualization, does not affect the observation data
+        if self.render_trace:
+            obs[list(zip(*self.traces[:-1]))] = self.VISITED
 
-    #     # Create Figure for rendering
-    #     if not hasattr(self, 'fig'):  # initialize figure and plotting axes
-    #         self.fig, (self.ax_full) = plt.subplots(nrows=1, ncols=1)
-    #     self.ax_full.axis('off')
-    #     # self.ax_partial.axis('off')
+        # Create Figure for rendering
+        if not hasattr(self, 'fig'):  # initialize figure and plotting axes
+            self.fig, (self.ax_full) = plt.subplots(nrows=1, ncols=1)
+        self.ax_full.axis('off')
+        # self.ax_partial.axis('off')
 
-    #     self.fig.show()
-    #     if self.live_display:
-    #         # Only create the image the first time
-    #         if not hasattr(self, 'ax_full_img'):
-    #             self.ax_full_img = self.ax_full.imshow(obs, cmap=self.cmap, norm=self.norm, animated=True)
-    #         # if not hasattr(self, 'ax_partial_img'):
-    #             # self.ax_partial_img = self.ax_partial.imshow(partial_obs, cmap=self.cmap, norm=self.norm, animated=True)
-    #         # Update the image data for efficient live video
-    #         self.ax_full_img.set_data(obs)
-    #         # self.ax_partial_img.set_data(partial_obs)
-    #     else:
-    #         # Create a new image each time to allow an animation to be created
-    #         self.ax_full_img = self.ax_full.imshow(obs, cmap=self.cmap, norm=self.norm, animated=True)
-    #         # self.ax_partial_img = self.ax_partial.imshow(partial_obs, cmap=self.cmap, norm=self.norm, animated=True)
+        self.fig.show()
+        if self.live_display:
+            # Only create the image the first time
+            if not hasattr(self, 'ax_full_img'):
+                self.ax_full_img = self.ax_full.imshow(obs, cmap=self.cmap, norm=self.norm, animated=True)
+            # if not hasattr(self, 'ax_partial_img'):
+                # self.ax_partial_img = self.ax_partial.imshow(partial_obs, cmap=self.cmap, norm=self.norm, animated=True)
+            # Update the image data for efficient live video
+            self.ax_full_img.set_data(obs)
+            # self.ax_partial_img.set_data(partial_obs)
+        else:
+            # Create a new image each time to allow an animation to be created
+            self.ax_full_img = self.ax_full.imshow(obs, cmap=self.cmap, norm=self.norm, animated=True)
+            # self.ax_partial_img = self.ax_partial.imshow(partial_obs, cmap=self.cmap, norm=self.norm, animated=True)
 
-    #     plt.draw()
+        plt.draw()
 
-    #     if self.live_display:
-    #         # Update the figure display immediately
-    #         self.fig.canvas.draw()
-    #     else:
-    #         # Put in AxesImage buffer for video generation
-    #         self.ax_imgs.append([self.ax_full_img])  # List of axes to update figure frame
+        if self.live_display:
+            # Update the figure display immediately
+            self.fig.canvas.draw()
+        else:
+            # Put in AxesImage buffer for video generation
+            self.ax_imgs.append([self.ax_full_img])  # List of axes to update figure frame
 
-    #         self.fig.set_dpi(100)
+            self.fig.set_dpi(100)
 
-    #     plt.pause(.1)
-    #     return self.fig
+        plt.pause(.1)
+        return self.fig
 
     def _goal_test(self, state):
         """Return True if current state is a goal state."""
@@ -255,137 +254,137 @@ class MazeEnv(gym.Env):
 
         return maze[pos[0] - size: pos[0] + size + 1, pos[1] - size: pos[1] + size + 1]
 
-    # def _get_video(self, interval=200, gif_path=None):
-    #     if self.live_display:
-    #         # TODO: Find a way to create animations without slowing down the live display
-    #         print('Warning: Generating an Animation when live_display=True not yet supported.')
-    #     anim = animation.ArtistAnimation(self.fig, self.ax_imgs, interval=interval)
+    def _get_video(self, interval=200, gif_path=None):
+        if self.live_display:
+            # TODO: Find a way to create animations without slowing down the live display
+            print('Warning: Generating an Animation when live_display=True not yet supported.')
+        anim = animation.ArtistAnimation(self.fig, self.ax_imgs, interval=interval)
 
-    #     if gif_path is not None:
-    #         anim.save(gif_path, writer='imagemagick', fps=10)
-    #     return anim
+        if gif_path is not None:
+            anim.save(gif_path, writer='imagemagick', fps=10)
+        return anim
 
-    # def render_learning(self, policy, qf, vmin, vmax):
-    #     # adapted from https://github.com/rlpy/rlpy/blob/master/rlpy/Domains/GridWorld.py
-    #     obs = self._get_full_obs()
-    #     ROWS, COLS = self.maze_size
-    #     MIN_RETURN = None
-    #     MAX_RETURN = None
-    #     SHIFT = .1
-    #     cmap_actions = colors.ListedColormap(['.5', 'k'], 'Actions')
-    #     V = np.zeros((ROWS, COLS))
+    def render_learning(self, policy, qf, vmin, vmax):
+        # adapted from https://github.com/rlpy/rlpy/blob/master/rlpy/Domains/GridWorld.py
+        obs = self._get_full_obs()
+        ROWS, COLS = self.maze_size
+        MIN_RETURN = None
+        MAX_RETURN = None
+        SHIFT = .1
+        cmap_actions = colors.ListedColormap(['.5', 'k'], 'Actions')
+        V = np.zeros((ROWS, COLS))
 
-    #     if not hasattr(self, 'fig_value'):
-    #         plt.figure("Value Function")
-    #         self.fig_value = plt.imshow(np.array(self.maze), cmap=self.cmap, norm=self.norm, animated=False)
-    #         self.im_value = plt.imshow(np.zeros_like(obs), cmap=plt.cm.RdYlGn, vmin=vmin, vmax=vmax, alpha=0.7)
-    #         plt.colorbar()
-    #         plt.xticks(np.arange(COLS), fontsize=12)
-    #         plt.yticks(np.arange(ROWS), fontsize=12)
+        if not hasattr(self, 'fig_value'):
+            plt.figure("Value Function")
+            self.fig_value = plt.imshow(np.array(self.maze), cmap=self.cmap, norm=self.norm, animated=False)
+            self.im_value = plt.imshow(np.zeros_like(obs), cmap=plt.cm.RdYlGn, vmin=vmin, vmax=vmax, alpha=0.7)
+            plt.colorbar()
+            plt.xticks(np.arange(COLS), fontsize=12)
+            plt.yticks(np.arange(ROWS), fontsize=12)
 
-    #     if not hasattr(self, 'fig_policy'):
-    #         plt.figure("Policy")
-    #         self.fig_policy = plt.imshow(obs, cmap=self.cmap, norm=self.norm, animated=False)
+        if not hasattr(self, 'fig_policy'):
+            plt.figure("Policy")
+            self.fig_policy = plt.imshow(obs, cmap=self.cmap, norm=self.norm, animated=False)
 
-    #         plt.xticks(np.arange(COLS), fontsize=12)
-    #         plt.yticks(np.arange(ROWS), fontsize=12)
-    #         # Create quivers for each action. 4 in total
-    #         X = np.arange(ROWS) - SHIFT
-    #         Y = np.arange(COLS)
-    #         X, Y = np.meshgrid(X, Y)
-    #         DX = DY = np.ones(X.shape)
-    #         C = np.zeros(X.shape)
-    #         C[0, 0] = 1  # Making sure C has both 0 and 1
-    #         # length of arrow/width of bax. Less then 0.5 because each arrow is
-    #         # offset, 0.4 s nice but could be better/auto generated
-    #         arrow_ratio = 0.4
-    #         Max_Ratio_ArrowHead_to_ArrowLength = 0.25
-    #         ARROW_WIDTH = 0.5 * Max_Ratio_ArrowHead_to_ArrowLength / 5.0
-    #         self.upArrows_fig = plt.quiver(
-    #             Y, X, DY, DX, C,
-    #             units='y', cmap=cmap_actions, width=-1 * ARROW_WIDTH,
-    #             scale_units="height", scale=old_div(ROWS, arrow_ratio))
-    #         self.upArrows_fig.set_clim(vmin=0, vmax=1)
-    #         X = np.arange(ROWS) + SHIFT
-    #         Y = np.arange(COLS)
-    #         X, Y = np.meshgrid(X, Y)
-    #         self.downArrows_fig = plt.quiver(
-    #             Y, X, DY, DX, C,
-    #             units='y', cmap=cmap_actions, width=-1 * ARROW_WIDTH,
-    #             scale_units="height", scale=old_div(ROWS, arrow_ratio))
-    #         self.downArrows_fig.set_clim(vmin=0, vmax=1)
-    #         X = np.arange(ROWS)
-    #         Y = np.arange(COLS) - SHIFT
-    #         X, Y = np.meshgrid(X, Y)
-    #         self.leftArrows_fig = plt.quiver(
-    #             Y, X, DY, DX, C,
-    #             units='x', cmap=cmap_actions, width=ARROW_WIDTH,
-    #             scale_units="width", scale=old_div(COLS, arrow_ratio))
-    #         self.leftArrows_fig.set_clim(vmin=0, vmax=1)
-    #         X = np.arange(ROWS)
-    #         Y = np.arange(COLS) + SHIFT
-    #         X, Y = np.meshgrid(X, Y)
-    #         self.rightArrows_fig = plt.quiver(
-    #             Y, X, DY, DX, C,
-    #             units='x', cmap=cmap_actions, width=ARROW_WIDTH,
-    #             scale_units="width", scale=old_div(COLS, arrow_ratio))
-    #         self.rightArrows_fig.set_clim(vmin=0, vmax=1)
-    #         plt.show()
+            plt.xticks(np.arange(COLS), fontsize=12)
+            plt.yticks(np.arange(ROWS), fontsize=12)
+            # Create quivers for each action. 4 in total
+            X = np.arange(ROWS) - SHIFT
+            Y = np.arange(COLS)
+            X, Y = np.meshgrid(X, Y)
+            DX = DY = np.ones(X.shape)
+            C = np.zeros(X.shape)
+            C[0, 0] = 1  # Making sure C has both 0 and 1
+            # length of arrow/width of bax. Less then 0.5 because each arrow is
+            # offset, 0.4 s nice but could be better/auto generated
+            arrow_ratio = 0.4
+            Max_Ratio_ArrowHead_to_ArrowLength = 0.25
+            ARROW_WIDTH = 0.5 * Max_Ratio_ArrowHead_to_ArrowLength / 5.0
+            self.upArrows_fig = plt.quiver(
+                Y, X, DY, DX, C,
+                units='y', cmap=cmap_actions, width=-1 * ARROW_WIDTH,
+                scale_units="height", scale=old_div(ROWS, arrow_ratio))
+            self.upArrows_fig.set_clim(vmin=0, vmax=1)
+            X = np.arange(ROWS) + SHIFT
+            Y = np.arange(COLS)
+            X, Y = np.meshgrid(X, Y)
+            self.downArrows_fig = plt.quiver(
+                Y, X, DY, DX, C,
+                units='y', cmap=cmap_actions, width=-1 * ARROW_WIDTH,
+                scale_units="height", scale=old_div(ROWS, arrow_ratio))
+            self.downArrows_fig.set_clim(vmin=0, vmax=1)
+            X = np.arange(ROWS)
+            Y = np.arange(COLS) - SHIFT
+            X, Y = np.meshgrid(X, Y)
+            self.leftArrows_fig = plt.quiver(
+                Y, X, DY, DX, C,
+                units='x', cmap=cmap_actions, width=ARROW_WIDTH,
+                scale_units="width", scale=old_div(COLS, arrow_ratio))
+            self.leftArrows_fig.set_clim(vmin=0, vmax=1)
+            X = np.arange(ROWS)
+            Y = np.arange(COLS) + SHIFT
+            X, Y = np.meshgrid(X, Y)
+            self.rightArrows_fig = plt.quiver(
+                Y, X, DY, DX, C,
+                units='x', cmap=cmap_actions, width=ARROW_WIDTH,
+                scale_units="width", scale=old_div(COLS, arrow_ratio))
+            self.rightArrows_fig.set_clim(vmin=0, vmax=1)
+            plt.show()
 
-    #     plt.figure("Policy")
-    #     # Boolean 3 dimensional array. The third array highlights the action.
-    #     # Thie mask is used to see in which cells what actions should exist
-    #     Mask = np.ones((COLS, ROWS, self.num_actions), dtype='bool')
-    #     arrowSize = np.zeros((COLS, ROWS, self.num_actions), dtype='float')
-    #     # 0 = suboptimal action, 1 = optimal action
-    #     arrowColors = np.zeros((COLS, ROWS, self.num_actions), dtype='uint8')
-    #     for r in range(ROWS):
-    #         for c in range(COLS):
-    #             if obs[r, c] != self.WALL:
-    #                 _obs = np.array(self.maze)
-    #                 for goal in self.goal_states: _obs[goal[0], goal[1]] = self.GOAL
-    #                 _obs[r, c] = self.AGENT
-    #                 act, _ = policy.get_action(_obs.reshape(1, -1))
-    #                 Qs = [qf(ptu.Variable(ptu.from_numpy(_obs).view(1, -1)),
-    #                          ptu.Variable(a.view(1, -1)))
-    #                       for a in ptu.eye(self.num_actions)]
-    #                 V[r, c] = ptu.get_numpy(torch.max(torch.cat(Qs)))
-    #                 Mask[c, r, :] = False
-    #                 arrowColors[c, r, act] = 1
-    #                 arrowSize[c, r, :] = policy.get_actions(obs.reshape(1, -1))
+        plt.figure("Policy")
+        # Boolean 3 dimensional array. The third array highlights the action.
+        # Thie mask is used to see in which cells what actions should exist
+        Mask = np.ones((COLS, ROWS, self.num_actions), dtype='bool')
+        arrowSize = np.zeros((COLS, ROWS, self.num_actions), dtype='float')
+        # 0 = suboptimal action, 1 = optimal action
+        arrowColors = np.zeros((COLS, ROWS, self.num_actions), dtype='uint8')
+        for r in range(ROWS):
+            for c in range(COLS):
+                if obs[r, c] != self.WALL:
+                    _obs = np.array(self.maze)
+                    for goal in self.goal_states: _obs[goal[0], goal[1]] = self.GOAL
+                    _obs[r, c] = self.AGENT
+                    act, _ = policy.get_action(_obs.reshape(1, -1))
+                    Qs = [qf(ptu.Variable(ptu.from_numpy(_obs).view(1, -1)),
+                             ptu.Variable(a.view(1, -1)))
+                          for a in ptu.eye(self.num_actions)]
+                    V[r, c] = ptu.get_numpy(torch.max(torch.cat(Qs)))
+                    Mask[c, r, :] = False
+                    arrowColors[c, r, act] = 1
+                    arrowSize[c, r, :] = policy.get_actions(obs.reshape(1, -1))
 
-    #     # Show Policy Up Arrows
-    #     DX = arrowSize[:, :, 2]
-    #     DY = np.zeros((ROWS, COLS))
-    #     DX = np.ma.masked_array(DX, mask=Mask[:, :, 2])
-    #     DY = np.ma.masked_array(DY, mask=Mask[:, :, 2])
-    #     C = np.ma.masked_array(arrowColors[:, :, 2], mask=Mask[:, :, 2])
-    #     self.upArrows_fig.set_UVC(DY, DX, C)
-    #     # Show Policy Down Arrows
-    #     DX = -arrowSize[:, :, 3]
-    #     DY = np.zeros((ROWS, COLS))
-    #     DX = np.ma.masked_array(DX, mask=Mask[:, :, 3])
-    #     DY = np.ma.masked_array(DY, mask=Mask[:, :, 3])
-    #     C = np.ma.masked_array(arrowColors[:, :, 3], mask=Mask[:, :, 3])
-    #     self.downArrows_fig.set_UVC(DY, DX, C)
-    #     # Show Policy Left Arrows
-    #     DX = np.zeros((ROWS, COLS))
-    #     DY = -arrowSize[:, :, 0]
-    #     DX = np.ma.masked_array(DX, mask=Mask[:, :, 0])
-    #     DY = np.ma.masked_array(DY, mask=Mask[:, :, 0])
-    #     C = np.ma.masked_array(arrowColors[:, :, 0], mask=Mask[:, :, 0])
-    #     self.leftArrows_fig.set_UVC(DY, DX, C)
-    #     # Show Policy Right Arrows
-    #     DX = np.zeros((ROWS, COLS))
-    #     DY = arrowSize[:, :, 1]
-    #     DX = np.ma.masked_array(DX, mask=Mask[:, :, 1])
-    #     DY = np.ma.masked_array(DY, mask=Mask[:, :, 1])
-    #     C = np.ma.masked_array(arrowColors[:, :, 1], mask=Mask[:, :, 1])
-    #     self.rightArrows_fig.set_UVC(DY, DX, C)
-    #     plt.draw()
-    #     plt.pause(.1)
+        # Show Policy Up Arrows
+        DX = arrowSize[:, :, 2]
+        DY = np.zeros((ROWS, COLS))
+        DX = np.ma.masked_array(DX, mask=Mask[:, :, 2])
+        DY = np.ma.masked_array(DY, mask=Mask[:, :, 2])
+        C = np.ma.masked_array(arrowColors[:, :, 2], mask=Mask[:, :, 2])
+        self.upArrows_fig.set_UVC(DY, DX, C)
+        # Show Policy Down Arrows
+        DX = -arrowSize[:, :, 3]
+        DY = np.zeros((ROWS, COLS))
+        DX = np.ma.masked_array(DX, mask=Mask[:, :, 3])
+        DY = np.ma.masked_array(DY, mask=Mask[:, :, 3])
+        C = np.ma.masked_array(arrowColors[:, :, 3], mask=Mask[:, :, 3])
+        self.downArrows_fig.set_UVC(DY, DX, C)
+        # Show Policy Left Arrows
+        DX = np.zeros((ROWS, COLS))
+        DY = -arrowSize[:, :, 0]
+        DX = np.ma.masked_array(DX, mask=Mask[:, :, 0])
+        DY = np.ma.masked_array(DY, mask=Mask[:, :, 0])
+        C = np.ma.masked_array(arrowColors[:, :, 0], mask=Mask[:, :, 0])
+        self.leftArrows_fig.set_UVC(DY, DX, C)
+        # Show Policy Right Arrows
+        DX = np.zeros((ROWS, COLS))
+        DY = arrowSize[:, :, 1]
+        DX = np.ma.masked_array(DX, mask=Mask[:, :, 1])
+        DY = np.ma.masked_array(DY, mask=Mask[:, :, 1])
+        C = np.ma.masked_array(arrowColors[:, :, 1], mask=Mask[:, :, 1])
+        self.rightArrows_fig.set_UVC(DY, DX, C)
+        plt.draw()
+        plt.pause(.1)
 
-    #     plt.figure("Value Function")
-    #     self.im_value.set_data(V)
-    #     plt.draw()
-    #     plt.pause(.1)
+        plt.figure("Value Function")
+        self.im_value.set_data(V)
+        plt.draw()
+        plt.pause(.1)
