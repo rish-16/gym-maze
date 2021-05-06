@@ -97,7 +97,7 @@ class MazeEnv(gym.Env):
         cur_y = self.state[1]
         
         def dynamic_reward_function():
-            return self.read_table(cur_x, cur_y) - self.read_table(old_state[0], old_state[1])
+            return self.read_table(old_state[0], old_state[1]) - self.read_table(cur_x, cur_y)
 
         # Footprint: Record agent trajectory
         self.traces.append(self.state)
